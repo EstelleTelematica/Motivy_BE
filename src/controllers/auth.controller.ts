@@ -3,9 +3,8 @@ import { loginUser } from "../services/auth.service";
 
 export const login = async (req: Request, res: Response) => {
     try {
-        //const email = req.body.email; //seleziona l'email dal body della request
-        //const password = req.body.password; //seleziona la password dal body della request
-        const { email, password } = req.body; //destruttura l'oggetto body della request per ottenere email e password
+        const email = req.body.email; //seleziona l'email dal body della request
+        const password = req.body.password; //seleziona la password dal body della request
         const result = await loginUser(email, password); //
         res.status(result.statusCode).json(result); //assegna alla risposta uno statuts dato dal valore di ritorno della funzione statusCode e un messaggio contenente sia l'email ch la password
     } catch (error) {
