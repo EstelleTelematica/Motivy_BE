@@ -1,7 +1,7 @@
 import { UUID } from "crypto";
 import { Request } from "express";
-import { User } from "../../models/User";
- 
+import { User } from "../models/User";
+
 export interface AuthenticatedRequest extends Request {
   email: string;
   userId: UUID | string;

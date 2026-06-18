@@ -130,8 +130,10 @@
     "yn": "^3.1.1"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^4.17.25",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/pg": "^8.20.0",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3"
