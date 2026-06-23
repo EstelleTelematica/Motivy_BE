@@ -3,7 +3,10 @@ import crypto from "crypto";
 import bcrypt from "bcrypt";
 import { userRepository } from "../db/repositories/user.repository";
 import { refreshTokenRepository } from "../db/repositories/refreshToken.repository";
-import { badRequest, forbidden, internalError, success } from "../utils/responses";
+import { badRequest, created, forbidden, internalError, success, unauthorized } from "../utils/responses";
+import { SignUpRequestBody, validateSignUpRequestBody } from "../types/user/SignUpRequestBody";
+import { RefreshToken } from "../models/RefreshToken";
+import { refreshToken } from "../controllers/auth.controller";
 
 const JWT_SECRET = process.env.JWT_SECRET || ""; //crea una variabile d'ambiente chiamata JWT_SECRET passandogli una chiave segreta usata per firmare i token JWT. Se non esiste nel sistema assegna una stringa vuota.
 
@@ -38,7 +41,7 @@ const generateTokenPair = async (userId: string) => {
     expiresAt.setDate(expiresAt.getDate() + 7); //e gli setta la data di scadenza a 7 giorni dopo la data attuale (metodo getDate()). Questo significa che il refresh token sarà valido per 7 giorni.
     await refreshTokenRepository.create({
         userId,
-        tokenHash: refreshTokenHash,
+        hashToken: refreshTokenHash,
         expiresAt,
         isRevoked: false,
     });
@@ -72,7 +75,98 @@ export const loginUser = async (email: string, password: string) => {
             user: userWithoutPassword,
         });
     } catch (error) {
-        console.log("Internal server error");
+        console.log("Internal server error", error);
         return internalError("Login failed");
     }
 };
+
+export const signUpUser = async (body: SignUpRequestBody) => {
+    try {
+        const validationError = validateSignUpRequestBody(body);
+        if (validationError) {
+            return badRequest(validationError);
+        }
+
+        const { firstName, lastName, email, password, phoneNumber, birthday } = body;
+
+        //check email 
+        const existingUser = await userRepository.findUserByEmail(email.trim().toLowerCase());
+        if (existingUser) {
+            return badRequest("Email already exist, plese choose another one");
+        }
+
+        const todayYear = new Date().getFullYear();
+        const birthdayYear = new Date().getFullYear();
+
+        //check date
+        if (birthday) {
+            if ((todayYear - birthdayYear <= 12) || (todayYear + birthdayYear >= 128)) {
+                return badRequest("You must be between 12 and 128 years old");
+            }
+        }
+
+        //hash password
+        const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+
+        const userData = {
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            email: email.trim().toLowerCase(),
+            hashPassword: passwordHash,
+            phoneNumber: phoneNumber?.trim(),
+            birthday: birthday,
+        }
+
+        const createdUser = await userRepository.create(userData);
+        const { refreshToken, accessToken } = await generateTokenPair(createdUser.id);
+        return created("Succesfully signed up", {
+            user: createdUser,
+            refreshToken,
+            accessToken
+        });
+    } catch (error) {
+        console.log("Internal server error", error);
+        return internalError("Sign up failed");
+    }
+}
+
+export const refreshAccessToken = async (refreshToken: string) => {
+    try {
+        if (!refreshToken) {
+            return badRequest("Missing refresh Token");
+        }
+        const refreshTokenHash = crypto.createHash("sha256").update(refreshToken).digest("hex");
+        const stroredRefreshToken = await refreshTokenRepository.findValidToken(refreshTokenHash);
+        if (!stroredRefreshToken) {
+            return unauthorized("invalid or expired token");
+        }
+        const user = await userRepository.findById(stroredRefreshToken.userId);
+        if (!user) {
+            return unauthorized("user not found");
+        }
+        const newAccessToken = generateAccessToken(user.id);
+        return success("Access token succesfully created", { newAccessToken });
+    }
+    catch (error) {
+        console.log("Internal server error", error);
+        return internalError("Internal server error");
+    }
+};
+
+export const logOutUser = async (refreshToken: string) => {
+    try {
+        if (!refreshToken) {
+            return badRequest("missing refresh token");
+        }
+        const refreshTokenHash = crypto.createHash("sha256").update(refreshToken).digest("hex");
+        const revokedRefreshToken = await refreshTokenRepository.revokeToken(refreshTokenHash);
+        if (!revokedRefreshToken) {
+            return badRequest("invalid or already revoked refresh token");
+        }
+        return success("Succesfully logged out");
+    }
+    catch (error) {
+        console.log("Internal server error", error);
+        return internalError("Internal server error");
+    }
+}

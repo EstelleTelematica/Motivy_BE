@@ -6,7 +6,7 @@ const DB_SCHEMA = process.env.DB_SCHEMA;
 
 export class UserRepository extends PostgresWrapper {
     constructor() {
-        super(`"${DB_SCHEMA}"."users"`);
+        super(`"${DB_SCHEMA}"."User"`);
     }
 
     async findUserByEmail(email: string): Promise<User | null> {

@@ -8,6 +8,14 @@ export const badRequest = (message: string): MotivyAPIResponse => ({
     success: false,
 });
 
+export const unauthorized = (message: string): MotivyAPIResponse => ({
+    statusCode: 401,
+    data: null,
+    message,
+    success: false,
+});
+
+
 export const forbidden = (message: string): MotivyAPIResponse => ({
     statusCode: 403,
     data: null,
