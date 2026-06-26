@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllTasks } from "../controllers/task.controller";
+import { createOneTask, getAllTasks } from "../controllers/task.controller";
 import { decode } from "../middlewares/decode";
 
 const router = express.Router();
@@ -8,7 +8,7 @@ router.get('/', decode, getAllTasks); //decode è una call back perché viene pa
 
 //router.get('/:id', getOneTask);
 
-//router.post('/', createOneTask);
+router.post('/', createOneTask);
 
 //router.patch('/:id', editOneTask);
 
