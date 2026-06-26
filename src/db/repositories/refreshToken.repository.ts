@@ -8,7 +8,7 @@ import { RefreshToken } from "../../models/RefreshToken";
 
 const DB_SCHEMA = process.env.DB_SCHEMA;
 
-export class RefreshTokenRepository extends PostgresWrapper {
+class RefreshTokenRepository extends PostgresWrapper {
     constructor() {
         super(`"${DB_SCHEMA}"."RefreshToken"`);
     }

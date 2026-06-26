@@ -3,6 +3,7 @@ import { loginUser, logOutUser, refreshAccessToken, signUpUser } from "../servic
 
 export const login = async (req: Request, res: Response) => {
     try {
+        //console.log(req);
         const email = req.body.email; //seleziona l'email dal body della request
         const password = req.body.password; //seleziona la password dal body della request
         const result = await loginUser(email, password); //

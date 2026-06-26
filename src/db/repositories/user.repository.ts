@@ -4,7 +4,7 @@ import pool from "../../db/db.config";
 
 const DB_SCHEMA = process.env.DB_SCHEMA;
 
-export class UserRepository extends PostgresWrapper {
+class UserRepository extends PostgresWrapper {
     constructor() {
         super(`"${DB_SCHEMA}"."User"`);
     }
