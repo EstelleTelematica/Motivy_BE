@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { loginUser } from "../services/auth.service";
+import { loginUser, logOutUser, refreshAccessToken, signUpUser } from "../services/auth.service";
 
 export const login = async (req: Request, res: Response) => {
     try {
@@ -13,22 +13,40 @@ export const login = async (req: Request, res: Response) => {
     }
 };
 
-/** 
-export const logout = async (req, res) => {
+export const logout = async (req: Request, res: Response) => {
     try {
-
+        const { refreshToken } = req.body;
+        const result = await logOutUser(refreshToken);
+        res.status(result.statusCode).json(result);
     } catch (error) {
-
+        console.log("Unexpected error in controller");
+        res.status(500).json({ message: "Internal server error" });
     }
 };
 
-export const signUp = async (req, res) => {
+export const signUp = async (req: Request, res: Response) => {
     try {
-
+        const data = req.body;
+        const result = await signUpUser(data);
+        res.status(result.statusCode).json(result);
     } catch (error) {
-
+        console.log("Unexpected error in controller");
+        res.status(500).json({ message: "Internal server error" });
     }
 };
-*/
+
+export const refreshToken = async (req: Request, res: Response) => {
+    try {
+        //const refreshToken = req.body.refreshToken;
+        const { refreshToken } = req.body;
+        const result = await refreshAccessToken(refreshToken);
+        res.status(result.statusCode).json(result);
+    }
+    catch (error) {
+        console.log("Unexpected error in controller");
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
 
 

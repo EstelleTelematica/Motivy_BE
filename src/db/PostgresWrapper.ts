@@ -122,4 +122,5 @@ export class PostgresWrapper {
         const res = await pool.query(query, [id]);
         return res.rows[0];
     }
+
 }

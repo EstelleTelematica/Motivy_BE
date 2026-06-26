@@ -9,18 +9,18 @@ export interface SignUpRequestBody {
     birthday?: Date;
 }
 
-export const validateSignUpRequestBody = (data: SignUpRequestBody) => { 
-    const schema = Joi.object({ 
-        firstName: Joi.string().trim().min(1).max(100).required(), 
-        lastName: Joi.string().trim().min(1).max(100).required(), 
-        email: Joi.string().email().trim().required(), 
-        password: Joi.string().min(6).required(), 
-        phoneNumber: Joi.string().trim().optional(), 
-        birthday: Joi.date().optional(), 
-    }); 
+export const validateSignUpRequestBody = (data: SignUpRequestBody) => {
+    const schema = Joi.object({
+        firstName: Joi.string().trim().min(1).max(100).required(),
+        lastName: Joi.string().trim().min(1).max(100).required(),
+        email: Joi.string().email().trim().required(),
+        password: Joi.string().min(8).required(),
+        phoneNumber: Joi.string().trim().optional(),
+        birthday: Joi.date().optional(),
+    });
 
-    const { error } = schema.validate(data, { abortEarly: false }); 
-    if (!error) return null; 
+    const { error } = schema.validate(data, { abortEarly: false });
+    if (!error) return null;
 
     /*per come è definita la libreria joi,
     l'error contiene un array chiamato details 
@@ -34,7 +34,7 @@ export const validateSignUpRequestBody = (data: SignUpRequestBody) => {
     il messaggio di errore collegato
   */
 
-    const invalidFields = [...new Set(error.details.map((d) => d.path.join(".")))]; 
+    const invalidFields = [...new Set(error.details.map((d) => d.path.join(".")))];
     /*La mappa map() prende tutti gli oggetti del nostro array details generato dalla libreria joi e seleziona per ognuno di queste coppie chiave: valore, solo il valore con chiave path, dato che il messaggio di errore non ci interessa. 
     Il singolo elemento è però contenuto in un array per questo motivo usiamo la join per trasformarlo in stringa e se ci sono più elememnti li uniamo con un punto. La mappa sarà quindi di stile:
     es: ["email", "email", "password"]
@@ -44,8 +44,8 @@ export const validateSignUpRequestBody = (data: SignUpRequestBody) => {
     Lo Spread Operator [...] ovvero i tre puntini "smontano" il Set e le parentesi quadre ricreano un array standard. Questa variabile finale invalidFields conterrà:
     es: ["email", "password"]
     */
-    
+
     return `Kindly fix these errors: ${invalidFields.join(", ")}`;
     //Infine il join(".") prende gli elementi dell'array e li unisce inserendo un punto come separatore.
-}; 
+};
 
