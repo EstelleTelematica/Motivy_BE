@@ -1,4 +1,5 @@
 import express from "express";
+import { getAllTasks } from "../controllers/task.controller";
 
 const router = express.Router();
 
