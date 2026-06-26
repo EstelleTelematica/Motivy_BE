@@ -1,3 +1,7 @@
+//estensione della classe wrapper: PostgreWrapper, 
+// estensione specifica per i RefreshToken
+//che richiama tutti i metodi della classe 
+
 import { PostgresWrapper } from "../PostgresWrapper";
 import pool from "../../db/db.config";
 import { RefreshToken } from "../../models/RefreshToken";
