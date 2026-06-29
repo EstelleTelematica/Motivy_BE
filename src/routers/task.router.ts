@@ -1,17 +1,17 @@
 import express from "express";
-import { createOneTask, getAllTasks } from "../controllers/task.controller";
+import { createOneTask, editOneTask, getAllTasks, getOneTask } from "../controllers/task.controller";
 import { decode } from "../middlewares/decode";
 
-const router = express.Router();
+const router = express.Router(); //expresse riconosce questo file come router
 
 router.get('/', decode, getAllTasks); //decode è una call back perché viene passata come parametro e lo so perhé non ha le tonde
 
-//router.get('/:id', getOneTask);
+router.get('/:id', decode, getOneTask);
 
-router.post('/', createOneTask);
+router.post('/', decode, createOneTask);
 
-//router.patch('/:id', editOneTask);
+router.patch('/:id', decode, editOneTask);
 
-//router.delete('/:id', deleteOneTask);
+//router.delete('/:id', decode, deleteOneTask);
 
 export default router;

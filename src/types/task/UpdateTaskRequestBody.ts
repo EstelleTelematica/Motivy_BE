@@ -1,24 +1,32 @@
+//In fase di update quali campi voglio che l'utente possa aggiornare (campi da aggiornare sono tutti opzionali)
+//Trovare un modo per far si che quando mi arriva un request body per l'aggiornamento, visto che sono tutti opzionali, devo aver un controllo per vedere se almeno un campo c'è
+//farlo da qui con joi. 
+
 import Joi from "joi";
 
-export interface CreateTaskRequestBody {
-    name: string;
+export interface UpdateTaskRequestBody {
+    name?: string;
     description?: string;
     category?: string;
     colour?: string;
-    isCompleted: boolean;
+    isCompleted?: boolean;
     startAt?: Date;
     finishAt?: Date;
 }
 
-export const validateCreateTaskRequestBody = (data: CreateTaskRequestBody) => {
+export const validateUpdateTaskRequestBody = (data: UpdateTaskRequestBody) => {
+
+    if (!data || Object.keys(data).length == 0) {
+        return `Kindly fix this error: provide at least one field to update`;
+    }
     const schema = Joi.object({
-        name: Joi.string().trim().min(1).max(500).required(),
+        name: Joi.string().trim().min(1).max(500).optional(),
         description: Joi.string().trim().min(1).max(2000).optional(),
         category: Joi.string().trim().min(1).max(50).optional(),
         colour: Joi.string().min(1).max(10).optional(),
         startAt: Joi.date().optional(),
         finishAt: Joi.date().optional(),
-        isCompleted: Joi.boolean().required(),
+        isCompleted: Joi.boolean().optional(),
     });
 
     const { error } = schema.validate(data, { abortEarly: false });
@@ -48,4 +56,4 @@ export const validateCreateTaskRequestBody = (data: CreateTaskRequestBody) => {
 
     return `Kindly fix these errors: ${invalidFields.join(", ")}`;
     //Infine il join(".") prende gli elementi dell'array e li unisce inserendo un punto come separatore.
-};
+}

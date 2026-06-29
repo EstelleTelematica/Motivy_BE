@@ -8,6 +8,7 @@ export interface Task {
     description?: string;
     category?: string;
     colour?: string;
+    isCompleted: boolean;
     startAt?: Date;
     finishAt?: Date;
     createdAt: Date;
