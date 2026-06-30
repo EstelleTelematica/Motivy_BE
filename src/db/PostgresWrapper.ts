@@ -97,7 +97,7 @@ export class PostgresWrapper {
 
     async findAndUpdate(filters = {}, updateData = {}) {
         const filterKeys = Object.keys(filters);
-        const filterValues = Object.values(filters);
+        const filterValues = Object.values(filters); //taskId qui non gli piace
         const updateKeys = Object.keys(updateData);
         const updateValues = Object.values(updateData);
         const setClause = updateKeys.map((k, i) => `"${k}"=$${i + 1}`).join(", ");
@@ -106,6 +106,7 @@ export class PostgresWrapper {
         const res = await pool.query(query, [...updateValues, ...filterValues]);
         return res.rows;
     }
+
 
     async delete(filters = {}) {
         const keys = Object.keys(filters);
@@ -124,3 +125,8 @@ export class PostgresWrapper {
     }
 
 }
+
+
+
+//const numbers = [1,2,3,4,5,6,7];
+//const multiplied = numbers.map((num) => num * 2)

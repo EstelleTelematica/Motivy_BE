@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-export const validateTaskId = (id: string) => {
+export const validateId = (id: string) => {
     const schema = Joi.string().guid({ version: 'uuidv4' }).required();
 
     // Validiamo direttamente la stringa id 

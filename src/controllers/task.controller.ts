@@ -1,6 +1,6 @@
 import { Request, Response } from "express"
 import { AuthenticatedRequest } from "../types/AuthenticatedRequest";
-import { generateOneTask, retrieveAllTasks, retrieveOneTask, updateOneTask } from "../services/task.service";
+import { generateOneTask, removeOneTask, retrieveAllTasks, retrieveOneTask, updateOneTask } from "../services/task.service";
 
 
 export const getAllTasks = async (req: Request, res: Response) => {
@@ -71,3 +71,18 @@ export const editOneTask = async (req: Request, res: Response) => {
         res.status(500).json({ message: "Internal server error" });
     }
 }
+
+
+export const deleteOneTask = async (req: Request, res: Response) => {
+    try {
+        const authReq = req as AuthenticatedRequest;
+        const userId = authReq.userId;
+        const { id } = authReq.params;
+        const result = await removeOneTask(id, userId);
+        res.status(result.statusCode).json(result);
+    } catch (error) {
+        console.log("Internal server error", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
+

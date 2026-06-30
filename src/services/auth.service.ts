@@ -18,7 +18,7 @@ const SALT_ROUNDS = 12; //definisce il costo di hashing per la libreria bcrypt, 
 
 const generateAccessToken = (userId: string): string => {  //creo la harrowfunction chiamandola 
     //generateAccessToken che prende come parametro l'id dell'utente (di tipo stringa) e ritorna una stringa. 
-    return jwt.sign({ userId }, JWT_SECRET, { expiresIn: "5m" }); //All'interno della funzione viene usata la libreria jsonwebtoken per generare un token JWT firmato con la chiave segreta. 
+    return jwt.sign({ userId }, JWT_SECRET, { expiresIn: "15m" }); //All'interno della funzione viene usata la libreria jsonwebtoken per generare un token JWT firmato con la chiave segreta. 
     //Il metodo sign() è uno dei metodi principali delle libreria jsonwebtoken e serve a crare un nuovo tocken crittografato, i parametri in ingresso sono:
     //Il token che contiene l'id dell'utente come payload (ovvero l'oggetto contenente dei dati che vogliamo nascondere dentro il tokent). Equivale a scrivere {userId: userId} dove il valore passato è il parametro della funzione.
     //poi passo la chiave segreta e infine passo un oggetto di configurazione dove passo una scadenza di 5 minuti.

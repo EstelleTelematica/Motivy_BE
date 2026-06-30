@@ -1,5 +1,6 @@
 
 import { MotivyAPIResponse } from "../types/MotivyAPIResponse";
+//http status code decisi universalmente
 
 export const badRequest = (message: string): MotivyAPIResponse => ({
     statusCode: 400,
