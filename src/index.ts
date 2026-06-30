@@ -5,6 +5,7 @@ import cors from "cors";
 import pool from "./db/db.config";
 import authRouter from "./routers/auth.router";
 import taskRouter from "./routers/task.router";
+import { decode } from "./middlewares/decode";
 
 const app = express();
 
@@ -29,8 +30,7 @@ const notFoundHandler: RequestHandler = (req, res) => {
 app.use(express.json()); //express interpreta i dati della route in json
 
 app.use("/auth", authRouter);
-app.use("/tasks", taskRouter);
-//app.use("/subtasks", subtaskRouter);
+app.use("/tasks", decode, taskRouter);
 app.use("*", notFoundHandler); //richiamo tutte le route per controllare se si aproo correttamente o restituisco errore
 
 const PORT = process.env.PORT || 8080;
