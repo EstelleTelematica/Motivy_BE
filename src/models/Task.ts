@@ -4,10 +4,11 @@ import { UUID } from "crypto";
 export interface Task {
     id: UUID;
     userId: UUID;
-    name: String;
-    description?: String;
-    category?: String;
-    colour?: String;
+    name: string;
+    description?: string;
+    category?: string;
+    colour?: string;
+    isCompleted: boolean;
     startAt?: Date;
     finishAt?: Date;
     createdAt: Date;
