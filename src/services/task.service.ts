@@ -12,7 +12,7 @@ export const retrieveAllTasks = async (userId: string) => {
         }
         const user = await userRepository.findById(userId);
         if (!user) {
-            return notFound("User not found"); //MA QUANDO PUò CAPITARE?
+            return notFound("User not found");
         }
         const tasks = await taskRepository.findTasksByUser(user.id);
         return success(`Succesfully retrieved ${tasks.length} tasks`, { tasks });
@@ -40,9 +40,8 @@ export const retrieveOneTask = async (taskId: string, userId: string) => {
         }
         //controllare se task.userId sia uguale allo userid che mi arriva come parametro in ingresso
         if (task.userId != userId) {
-            return badRequest("Task not found") //non dobbiamo dare all'hacker indizi se sta accedendo ad un task non suo :)
+            return badRequest("This task is not associated with your account");
         }
-
         return success(`Succesfully retrieved the task`, { task });
     } catch (error) {
         console.log("Internal server error", error);
@@ -154,9 +153,9 @@ export const updateOneTask = async (data: UpdateTaskRequestBody, taskId: string,
         if (taskData.finishAt && taskData.isCompleted && taskData.finishAt.getTime() > Date.now()) {
             return badRequest("Invalid finish date");
         }
-
         const task = await taskRepository.findAndUpdate({ id: taskId, userId }, taskData);
         return success("Successfully updated task", task[0]);
+
     } catch (error) {
         console.log("Internal server error", error);
         return internalError("Internal server error");

@@ -7,6 +7,7 @@ export const getAllSubtasks = async (req: Request, res: Response) => {
         const authReq = req as AuthenticatedRequest;
         const userId = authReq.userId;
         const { taskId } = authReq.params; //informazione ricavata con l'aiuto dell'AI 
+        console.log(authReq.params);
         const result = await retrieveAllSubtasks(userId, taskId);
         res.status(result.statusCode).json(result);
     }

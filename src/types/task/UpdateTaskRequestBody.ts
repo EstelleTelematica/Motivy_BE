@@ -1,7 +1,6 @@
 //In fase di update quali campi voglio che l'utente possa aggiornare (campi da aggiornare sono tutti opzionali)
 //Trovare un modo per far si che quando mi arriva un request body per l'aggiornamento, visto che sono tutti opzionali, devo aver un controllo per vedere se almeno un campo c'è
 //farlo da qui con joi. 
-
 import Joi from "joi";
 
 export interface UpdateTaskRequestBody {
