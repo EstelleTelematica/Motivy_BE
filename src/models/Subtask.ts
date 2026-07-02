@@ -5,6 +5,7 @@ export interface Subtask {
     taskId: UUID;
     name: String;
     description?: String;
+    colour?: String,
     isCompleted: boolean;
     startAt?: Date;
     finishAt?: Date;

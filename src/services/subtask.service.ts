@@ -8,14 +8,12 @@ import { validateId } from "../utils/validation";
 
 export const retrieveAllSubtasks = async (userId: string, taskId: string) => {
     try {
-        console.log("valoreeeee:     ", userId);
         if (!userId) {
             return badRequest("UserId is missing");
         }
         const user = await userRepository.findById(userId);
         if (!user) {
             return notFound("User not found");
-            console.log("dentro if:     ", user);
         }
 
         if (!taskId) {
@@ -26,7 +24,6 @@ export const retrieveAllSubtasks = async (userId: string, taskId: string) => {
             return badRequest(validationTaskIdError);
         }
         const task = await taskRepository.findById(taskId);
-        console.log(task);
         if (!task) {
             return notFound("Task not found");
         }
@@ -41,7 +38,7 @@ export const retrieveAllSubtasks = async (userId: string, taskId: string) => {
     }
 }
 
-export const retrieveOneSubtask = async (taskId: string, userId: string, subtaskId: string) => {
+export const retrieveOneSubtask = async (userId: string, taskId: string, subtaskId: string) => {
     try {
         if (!userId) {
             return badRequest("UserId is missing");
@@ -87,7 +84,7 @@ export const retrieveOneSubtask = async (taskId: string, userId: string, subtask
     }
 }
 
-export const generateOneSubtask = async (data: CreateSubtaskRequestBody, taskId: string, userId: string) => {
+export const generateOneSubtask = async (data: CreateSubtaskRequestBody, userId: string, taskId: string) => {
     try {
         if (!userId) {
             return badRequest("UserId is missing");
@@ -110,7 +107,7 @@ export const generateOneSubtask = async (data: CreateSubtaskRequestBody, taskId:
         if (!task) {
             return notFound("Task not found");
         }
-        //controllo che task id sia l'id in ingresso
+        //controllo che tahsk id sia l'id in ingresso
         if (task.userId !== userId) {
             return badRequest("This task is not associated with your account");
         }
@@ -157,7 +154,12 @@ export const generateOneSubtask = async (data: CreateSubtaskRequestBody, taskId:
             startAt: startAt,
             finishAt: finishAt
         }
-        const subtask = await subtaskRepository.create(subtaskData)
+        const subtask = await subtaskRepository.create(subtaskData);
+        //se hasSubtask è falso allora lo setto a true
+        if (!task.hasSubtask) {
+            const newTask = await taskRepository.findAndUpdate({ id: taskId, userId }, { hasSubtask: true });
+        }
+
         return success(`Succesfully created`, subtask);
     } catch (error) {
         console.log("Internal server error", error);
@@ -221,25 +223,24 @@ export const editOneSubtask = async (data: UpdateSubtaskRequestBody, userId: str
         };
 
         //controlli sui valori da inserire nel subtask
-        const { name, description, colour, isCompleted, startAt, finishAt } = data;
-        const startDate = startAt ? new Date(startAt) : null;
-        const finishDate = finishAt ? new Date(finishAt) : null;
+        const startDate = data.startAt ? new Date(data.startAt) : null;
+        const finishDate = data.finishAt ? new Date(data.finishAt) : null;
         const now = Date.now();
-        if ((startDate && finishAt) && (startDate > finishAt)) {
+        if ((startDate && finishDate) && (startDate > finishDate)) {
             return badRequest("Finish date precedes start date");
         }
-        if (!finishDate && isCompleted === true) {
+        if (!finishDate && data.isCompleted === true) {
             return badRequest("Required finish date");
         }
-        if (finishDate && isCompleted === false) {
+        if (finishDate && data.isCompleted === false) {
             return badRequest("Invalid isCompleted");
         }
-        if (finishDate && isCompleted === true && finishDate.getTime() > now) {
+        if (finishDate && data.isCompleted === true && finishDate.getTime() > now) {
             return badRequest("Invalid finish date");
         }
 
-        //salvo subtask in memoria
-        const subtask = await subtaskRepository.findAndUpdate({ id: subtaskId, taskId, userId }, subtaskData);
+        //salvo subtask nel data base
+        const subtask = await subtaskRepository.findAndUpdate({ id: subtaskId, taskId }, subtaskData);
         return success("Successfully updated subtask", subtask[0]);
 
     } catch (error) {
@@ -284,10 +285,14 @@ export const removeOneSubtask = async (userId: string, taskId: string, subtaskId
         if (currentSubtask.taskId !== taskId) {
             return badRequest("This subtask is not associated with your task");
         }
-        const subtask = await taskRepository.deleteById(taskId);
-        const deleteSubtask = await taskRepository.findById(taskId);
+        const subtask = await subtaskRepository.deleteById(subtaskId);
+        const deleteSubtask = await subtaskRepository.findById(subtaskId);
         if (deleteSubtask == subtask || deleteSubtask) {
             return internalError("Subtask not deleted");
+        }
+        const n = await subtaskRepository.countSubtasksByTask(taskId);
+        if (task.hasSubtask && n == 0) {
+            const newTask = await taskRepository.findAndUpdate({ id: taskId, userId }, { hasSubtask: false });
         }
         return success("Successfully removed subtask");
     } catch (error) {

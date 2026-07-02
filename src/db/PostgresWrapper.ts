@@ -104,6 +104,7 @@ export class PostgresWrapper {
         const setClause = updateKeys.map((k, i) => `"${k}"=$${i + 1}`).join(", ");
         const whereClause = filterKeys.map((k, i) => `"${k}"=$${i + 1 + updateKeys.length}`).join(" AND ");
         const query = `UPDATE ${this.tableName} SET ${setClause} WHERE ${whereClause} RETURNING *`;
+        console.log(query)
         const res = await pool.query(query, [...updateValues, ...filterValues]);
         return res.rows;
     }

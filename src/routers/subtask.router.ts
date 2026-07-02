@@ -1,7 +1,7 @@
 import express from "express";
 import { createOneSubtask, deleteOneSubtask, getAllSubtasks, getOneSubtask, updateOneSubtask } from "../controllers/subtask.controller";
 
-const router = express.Router(); //expresse riconosce questo file come router
+const router = express.Router({ mergeParams: true }); //expresse riconosce questo file come router
 
 router.get("/", getAllSubtasks);
 
