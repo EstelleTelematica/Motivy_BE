@@ -1,17 +1,20 @@
 import express from "express";
 import { createOneTask, deleteOneTask, editOneTask, getAllTasks, getOneTask } from "../controllers/task.controller";
 import { decode } from "../middlewares/decode";
+import subtaskRouter from "./subtask.router";
 
 const router = express.Router(); //expresse riconosce questo file come router
 
-router.get('/', decode, getAllTasks); //decode è una call back perché viene passata come parametro e lo so perhé non ha le tonde
+router.use("/:taskId/subtasks", decode, subtaskRouter);
 
-router.get('/:id', decode, getOneTask);
+router.get('/', getAllTasks); //decode è una call back perché viene passata come parametro e lo so perhé non ha le tonde
 
-router.post('/', decode, createOneTask);
+router.get('/:id', getOneTask);
 
-router.patch('/:id', decode, editOneTask);
+router.post('/', createOneTask);
 
-router.delete('/:id', decode, deleteOneTask);
+router.patch('/:id', editOneTask);
+
+router.delete('/:id', deleteOneTask);
 
 export default router;

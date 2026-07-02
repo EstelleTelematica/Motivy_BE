@@ -5,8 +5,6 @@ import { userRepository } from "../db/repositories/user.repository";
 import { refreshTokenRepository } from "../db/repositories/refreshToken.repository";
 import { badRequest, created, forbidden, internalError, success, unauthorized } from "../utils/responses";
 import { SignUpRequestBody, validateSignUpRequestBody } from "../types/user/SignUpRequestBody";
-import { RefreshToken } from "../models/RefreshToken";
-import { refreshToken } from "../controllers/auth.controller";
 
 const JWT_SECRET = process.env.JWT_SECRET || ""; //crea una variabile d'ambiente chiamata JWT_SECRET passandogli una chiave segreta usata per firmare i token JWT. Se non esiste nel sistema assegna una stringa vuota.
 

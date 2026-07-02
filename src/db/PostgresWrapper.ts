@@ -6,7 +6,8 @@ export class PostgresWrapper {
     private tableName: string;
 
     constructor(tableName: string) {
-        this.tableName = tableName;
+        this.tableName = tableName; //il this punta ad una variabile/funzione presente nella classe che sta invocando questa variabile,
+        //quindi se chiamo il costuttore dal task repository allora this farà riferimento ad una istanza di quella classe
     }
 
     public getTableName() {
@@ -103,10 +104,10 @@ export class PostgresWrapper {
         const setClause = updateKeys.map((k, i) => `"${k}"=$${i + 1}`).join(", ");
         const whereClause = filterKeys.map((k, i) => `"${k}"=$${i + 1 + updateKeys.length}`).join(" AND ");
         const query = `UPDATE ${this.tableName} SET ${setClause} WHERE ${whereClause} RETURNING *`;
+        console.log(query)
         const res = await pool.query(query, [...updateValues, ...filterValues]);
         return res.rows;
     }
-
 
     async delete(filters = {}) {
         const keys = Object.keys(filters);

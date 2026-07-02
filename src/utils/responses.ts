@@ -1,4 +1,3 @@
-
 import { MotivyAPIResponse } from "../types/MotivyAPIResponse";
 //http status code decisi universalmente
 
