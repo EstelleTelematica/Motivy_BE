@@ -1,3 +1,4 @@
+import { PoolClient } from "pg";
 import { Subtask } from "../../models/Subtask";
 import pool from "../db.config";
 import { PostgresWrapper } from "../PostgresWrapper";
@@ -19,9 +20,9 @@ class SubtaskRepository extends PostgresWrapper { //la classe subtask repository
         const res = await pool.query(query, [id]); //metodo pool che serve per eseguire una query a partire da un 
         return res.rows;
     }
-    async countSubtasksByTask(Taskid: string): Promise<number> {
+    async countSubtasksByTaskWithClient(client: PoolClient, Taskid: string): Promise<number> {
         const query = `SELECT COUNT(*) FROM ${this.getTableName()} WHERE "taskId" = $1`;
-        const result = await pool.query(query, [Taskid]);
+        const result = await client.query(query, [Taskid]);
         return result.rows[0] ? parseInt(result.rows[0].count) : 0;
         /*se l'oggetto esiste lo converte in intero, altrimenti gli passa zero
         const variabile = condizione ? valore se vero : valore se falso

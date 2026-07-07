@@ -1,3 +1,4 @@
+import pool from "../db/db.config";
 import { subtaskRepository } from "../db/repositories/subtask.repository";
 import { taskRepository } from "../db/repositories/task.repository";
 import { userRepository } from "../db/repositories/user.repository";
@@ -85,34 +86,44 @@ export const retrieveOneSubtask = async (userId: string, taskId: string, subtask
 }
 
 export const generateOneSubtask = async (data: CreateSubtaskRequestBody, userId: string, taskId: string) => {
+    const client = await pool.connect();
     try {
+        await client.query("BEGIN");
         if (!userId) {
+            await client.query("ROLLBACK");
             return badRequest("UserId is missing");
         }
         if (!taskId) {
+            await client.query("ROLLBACK");
             return badRequest("TaskId is missing");
         }
         if (!data) {
+            await client.query("ROLLBACK");
             return badRequest("Subtask data are missing");
         }
         const validationTaskIdError = validateId(taskId);
         if (validationTaskIdError) {
+            await client.query("ROLLBACK");
             return badRequest(validationTaskIdError);
         }
         const user = await userRepository.findById(userId);
         if (!user) {
+            await client.query("ROLLBACK");
             return notFound("User not found");
         }
         const task = await taskRepository.findById(taskId);
         if (!task) {
+            await client.query("ROLLBACK");
             return notFound("Task not found");
         }
         //controllo che tahsk id sia l'id in ingresso
         if (task.userId !== userId) {
+            await client.query("ROLLBACK");
             return badRequest("This task is not associated with your account");
         }
         const validationSubtaskError = validateCreateSubtaskRequestBody(data);
         if (validationSubtaskError) {
+            await client.query("ROLLBACK");
             return badRequest(validationSubtaskError);
         }
 
@@ -133,15 +144,19 @@ export const generateOneSubtask = async (data: CreateSubtaskRequestBody, userId:
         */
         const now = Date.now();
         if ((startDate && finishAt) && (startDate > finishAt)) {
+            await client.query("ROLLBACK");
             return badRequest("Finish date precedes start date");
         }
         if (!finishDate && isCompleted === true) {
+            await client.query("ROLLBACK");
             return badRequest("Required finish date");
         }
         if (finishDate && isCompleted === false) {
+            await client.query("ROLLBACK");
             return badRequest("Invalid isCompleted");
         }
         if (finishDate && isCompleted === true && finishDate.getTime() > now) {
+            await client.query("ROLLBACK");
             return badRequest("Invalid finish date");
         }
         //creazione subtask
@@ -154,16 +169,19 @@ export const generateOneSubtask = async (data: CreateSubtaskRequestBody, userId:
             startAt: startAt,
             finishAt: finishAt
         }
-        const subtask = await subtaskRepository.create(subtaskData);
+        const subtask = await subtaskRepository.createWithClient(client, subtaskData);
         //se hasSubtask è falso allora lo setto a true
         if (!task.hasSubtask) {
-            const newTask = await taskRepository.findAndUpdate({ id: taskId, userId }, { hasSubtask: true });
+            await taskRepository.findAndUpdateWithClient(client, { id: taskId, userId }, { hasSubtask: true });
         }
-
+        await client.query("COMMIT");
         return success(`Succesfully created`, subtask);
     } catch (error) {
+        await client.query("ROLLBACK");
         console.log("Internal server error", error);
         return internalError("Internal server error");
+    } finally {
+        client.release();
     }
 }
 
@@ -250,54 +268,64 @@ export const editOneSubtask = async (data: UpdateSubtaskRequestBody, userId: str
 }
 
 export const removeOneSubtask = async (userId: string, taskId: string, subtaskId: string) => {
+    const client = await pool.connect();
     try {
         if (!userId) {
+            await client.query("ROLLBACK");
             return badRequest("UserId is missing");
         }
         if (!taskId) {
+            await client.query("ROLLBACK");
             return badRequest("TaskId is missing");
         }
         const validationTaskIdError = validateId(taskId);
         if (validationTaskIdError) {
+            await client.query("ROLLBACK");
             return badRequest(validationTaskIdError);
         }
         const validationSubtaskIdError = validateId(subtaskId);
         if (validationSubtaskIdError) {
+            await client.query("ROLLBACK");
             return badRequest(validationSubtaskIdError);
         }
         const user = await userRepository.findById(userId);
         if (!user) {
+            await client.query("ROLLBACK");
             return notFound("User not found");
         }
         const task = await taskRepository.findById(taskId);
         if (!task) {
+            await client.query("ROLLBACK");
             return notFound("Task not found");
         }
         //controllo che task id sia l'id in ingresso
         if (task.userId !== userId) {
+            await client.query("ROLLBACK");
             return badRequest("This task is not associated with your account");
         }
         const currentSubtask = await subtaskRepository.findById(subtaskId);
         if (!currentSubtask) {
+            await client.query("ROLLBACK");
             return notFound("Subtask not found");
         }
         //controllo che il taskid del subtask sia l'id del task
         if (currentSubtask.taskId !== taskId) {
+            await client.query("ROLLBACK");
             return badRequest("This subtask is not associated with your task");
         }
-        const subtask = await subtaskRepository.deleteById(subtaskId);
-        const deleteSubtask = await subtaskRepository.findById(subtaskId);
-        if (deleteSubtask == subtask || deleteSubtask) {
-            return internalError("Subtask not deleted");
-        }
-        const n = await subtaskRepository.countSubtasksByTask(taskId);
+        await subtaskRepository.deleteByIdWithClient(client, subtaskId);
+        const n = await subtaskRepository.countSubtasksByTaskWithClient(client, taskId);
         if (task.hasSubtask && n == 0) {
-            const newTask = await taskRepository.findAndUpdate({ id: taskId, userId }, { hasSubtask: false });
+            await taskRepository.findAndUpdateWithClient(client, { id: taskId, userId }, { hasSubtask: false });
         }
+        await client.query("COMMIT");
         return success("Successfully removed subtask");
     } catch (error) {
+        await client.query("ROLLBACK");
         console.log("Internal server error", error);
         return internalError("Internal server error");
+    } finally {
+        client.release();
     }
 }
 
@@ -338,3 +366,7 @@ const human: Human = {
     age: 20
 };
 */
+
+
+
+
