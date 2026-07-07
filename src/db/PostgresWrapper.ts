@@ -23,7 +23,6 @@ export class PostgresWrapper {
         return res.rows[0];
     }
 
-    /** 
     async createWithClient(client: PoolClient, data: any) {
         const columns = Object.keys(data).map((col) => `"${col}"`).join(", ");
         const values = Object.values(data);
@@ -32,7 +31,6 @@ export class PostgresWrapper {
         const res = await client.query(query, values);
         return res.rows[0];
     }
-    */
 
     async createMany(data: any[]) {
         if (data.length === 0) return [];
@@ -109,6 +107,19 @@ export class PostgresWrapper {
         return res.rows;
     }
 
+    async findAndUpdateWithClient(client: PoolClient, filters = {}, updateData = {}) {
+        const filterKeys = Object.keys(filters);
+        const filterValues = Object.values(filters); //taskId qui non gli piace
+        const updateKeys = Object.keys(updateData);
+        const updateValues = Object.values(updateData);
+        const setClause = updateKeys.map((k, i) => `"${k}"=$${i + 1}`).join(", ");
+        const whereClause = filterKeys.map((k, i) => `"${k}"=$${i + 1 + updateKeys.length}`).join(" AND ");
+        const query = `UPDATE ${this.tableName} SET ${setClause} WHERE ${whereClause} RETURNING *`;
+        console.log(query)
+        const res = await client.query(query, [...updateValues, ...filterValues]);
+        return res.rows;
+    }
+
     async delete(filters = {}) {
         const keys = Object.keys(filters);
         const values = Object.values(filters);
@@ -119,15 +130,29 @@ export class PostgresWrapper {
         return res.rows;
     }
 
+    async deleteWithClient(client: PoolClient, filters = {}) {
+        const keys = Object.keys(filters);
+        const values = Object.values(filters);
+        if (keys.length === 0) throw new Error("Delete requires filters!");
+        const conditions = keys.map((key, i) => `"${key}"=$${i + 1}`).join(" AND ");
+        const query = `DELETE FROM ${this.tableName} WHERE ${conditions} RETURNING *`;
+        const res = await client.query(query, values);
+        return res.rows;
+    }
+
     async deleteById(id: string | UUID) {
         const query = `DELETE FROM ${this.tableName} WHERE id=$1 RETURNING *`;
         const res = await pool.query(query, [id]);
         return res.rows[0];
     }
 
+    async deleteByIdWithClient(client: PoolClient, id: string | UUID) {
+        const query = `DELETE FROM ${this.tableName} WHERE id=$1 RETURNING *`;
+        const res = await client.query(query, [id]);
+        return res.rows[0];
+    }
+
 }
-
-
 
 //const numbers = [1,2,3,4,5,6,7];
 //const multiplied = numbers.map((num) => num * 2)
