@@ -1,5 +1,6 @@
 import express from "express";
-import { login, logout, refreshToken, signUp } from "../controllers/auth.controller";
+import { getMe, login, logout, refreshToken, signUp } from "../controllers/auth.controller";
+import { decode } from "../middlewares/decode";
 
 const router = express.Router();
 
@@ -12,5 +13,7 @@ router.post("/logout", logout);
 router.post("/sign-up", signUp);
 
 router.post("/refresh", refreshToken);
+
+router.get("/me", decode, getMe); //uso decode perché non può un utente nuovo leggere i dati di chi sono
 
 export default router;

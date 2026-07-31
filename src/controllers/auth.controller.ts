@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { loginUser, logOutUser, refreshAccessToken, signUpUser } from "../services/auth.service";
+import { AuthenticatedRequest } from "../types/AuthenticatedRequest";
 
 export const login = async (req: Request, res: Response) => {
     try {
@@ -50,4 +51,19 @@ export const refreshToken = async (req: Request, res: Response) => {
 };
 
 
-
+export const getMe = async (req: Request, res: Response) => {
+    try {
+        const authReq = req as AuthenticatedRequest;
+        const user = authReq.userId;
+        return res.status(200).json({
+            success: true,
+            data: user,
+        });
+    } catch (error) {
+        console.log("Unexpected error in getMe controller");
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};
