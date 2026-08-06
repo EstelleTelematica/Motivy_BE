@@ -8,6 +8,6 @@ export interface User {
     lastName: string;
     hashPassword: string;
     email: string;
-    phoneNumber: string;
-    birthday: Date;
+    phoneNumber?: string;
+    birthday?: Date;
 }

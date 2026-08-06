@@ -8,7 +8,7 @@ dotenv.config();
 //scritte lì dentro e caricarle in process.env. così facendo quelle chiavi restano segrete
 
 const pool = new Pool({ //creo l'istanza della classe reale Pool (richiamo il costruttore) che serve a tenere sempre aperte delle connessioni con il database
-  connectionString: process.env.POSTGRESQL_URL, //l'indirizzo del mio database viene preso dal mio fil env dove è scritto nella variabile POSTGRESQL_URL
+  connectionString: process.env.POSTGRESQL_URL, //l'indirizzo del mio database viene preso dal mio file env dove è scritto nella variabile POSTGRESQL_URL
   ssl: { //serve per cifrare (node.js contatta il database per dirgli che vuole condividere le informazioni nei pacchetti in maniera sicura tramite SSL)
     rejectUnauthorized: false, //dice di ignorare il fatto che questo certificato non sia firmato da un'autorità pubblica che conosce e di non bloccare l'applicazione (non connettendosi al database)
   },

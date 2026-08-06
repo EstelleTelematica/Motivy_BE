@@ -8,17 +8,17 @@ import { badRequest, created, internalError, notFound, success } from "../utils/
 export const retrieveAllTasks = async (userId: string) => {
     try {
         if (!userId) {
-            return badRequest("UserId is missing");
+            return badRequest("Id utente non trovato");
         }
         const user = await userRepository.findById(userId);
         if (!user) {
-            return notFound("User not found");
+            return notFound("Utente non trovato");
         }
         const tasks = await taskRepository.findTasksByUser(user.id);
-        return success(`Succesfully retrieved ${tasks.length} tasks`, { tasks });
+        return success(`Recuperati con successo ${tasks.length} obiettivi`, { tasks });
     } catch (error) {
-        console.log("Internal server error", error);
-        return internalError("Internal server error");
+        console.log("Errore interno del server", error);
+        return internalError("Errore interno del server");
     }
 }
 
@@ -26,7 +26,7 @@ export const retrieveOneTask = async (taskId: string, userId: string) => {
     try {
 
         if (!userId) {
-            return badRequest("UserId is missing");
+            return badRequest("Id utente non trovato");
         }
 
         //creare un metodo per controllare che una stringa sia uno UUID V4 valido, se è valido vai avanti se no ritorno un bad request 
@@ -36,16 +36,16 @@ export const retrieveOneTask = async (taskId: string, userId: string) => {
         }
         const task = await taskRepository.findById(taskId);
         if (!task) {
-            return notFound("Task not found");
+            return notFound("Obiettivo non trovato");
         }
         //controllare se task.userId sia uguale allo userid che mi arriva come parametro in ingresso
         if (task.userId != userId) {
-            return badRequest("This task is not associated with your account");
+            return badRequest("Questo obiettivo non è associato al tuo account");
         }
-        return success(`Succesfully retrieved the task`, { task });
+        return success(`Obiettivo recuperato con successo`, { task });
     } catch (error) {
-        console.log("Internal server error", error);
-        return internalError("Internal server error");
+        console.log("Errore interno del server", error);
+        return internalError("Errore interno del server");
     }
 }
 
@@ -53,7 +53,7 @@ export const generateOneTask = async (data: CreateTaskRequestBody, userId: strin
     try {
 
         if (!userId) {
-            return badRequest("UserId is missing");
+            return badRequest("Id utente non trovato");
         }
 
         const validationTaskError = validateCreateTaskRequestBody(data);
@@ -61,22 +61,24 @@ export const generateOneTask = async (data: CreateTaskRequestBody, userId: strin
             return badRequest(validationTaskError);
         }
 
-        const { name, description, category, colour, isCompleted, startAt, finishAt } = data;
+        const { name, description, category, colour, isCompleted} = data;
         //Prima di creare l'oggetto Task ci sono ulteriori controlli che posso fare sul Requestbody?
         //se è già completato quando lo inserisce ovvero data di effettiva fine sia precedente ad oggi
         //finishAt ci deve essere solo se isCompleted è true e al contrario assente se è false
+        const startAt = data.startAt ? new Date(data.startAt) : undefined;
+        const finishAt = data.finishAt ? new Date(data.finishAt) : undefined;
 
-        if ((startAt && finishAt) && (startAt > finishAt)) {
-            return badRequest("Finish date precedes start date");
+        if ((startAt && finishAt) && (startAt.getTime() > finishAt.getTime())) {
+            return badRequest("La data di fine non può precedere la data di inizio");
         }
         if (!finishAt && isCompleted == true) { //trasformo finisht in un valore numerico per il confronto con now() che restituisce un valore numerico
-            return badRequest("Required finish date");
+            return badRequest("Data di fine mancante per un obiettivo completato");
         }
         if (finishAt && isCompleted == false) { //trasformo finisht in un valore numerico per il confronto con now() che restituisce un valore numerico
-            return badRequest("Invalid isCompleted");
+            return badRequest("Impossibile assegnare una data di fine a un obiettivo non completato");
         }
         if (finishAt && isCompleted == true && finishAt.getTime() > Date.now()) { //trasformo finisht in un valore numerico per il confronto con now() che restituisce un valore numerico
-            return badRequest("Invalid finish date");
+            return badRequest("La data di fine non può essere nel futuro");
         }
 
         const taskData = {
@@ -92,11 +94,11 @@ export const generateOneTask = async (data: CreateTaskRequestBody, userId: strin
         }
 
         const task = await taskRepository.create(taskData);
-        return created("Successfully created task", task);
+        return created("Obiettivo creato con successo", task);
 
     } catch (error) {
-        console.log("Internal server error", error);
-        return internalError("Internal server error");
+        console.log("Errore interno del server", error);
+        return internalError("Errore interno del server");
     }
 }
 
@@ -104,7 +106,7 @@ export const generateOneTask = async (data: CreateTaskRequestBody, userId: strin
 export const updateOneTask = async (data: UpdateTaskRequestBody, taskId: string, userId: string) => {
     try {
         if (!userId) {
-            return badRequest("UserId is missing");
+            return badRequest("Id utente non trovato");
         }
 
         const validationIdError = validateId(taskId);
@@ -119,12 +121,33 @@ export const updateOneTask = async (data: UpdateTaskRequestBody, taskId: string,
 
         const currentTask = await taskRepository.findById(taskId);
         if (!currentTask) {
-            return notFound("Task not found");
+            return notFound("Obiettivo non trovato");
         }
 
         //controllare se task.userId sia uguale allo userId che mi arriva come parametro in ingresso
         if (currentTask.userId != userId) {
-            return badRequest("This task is not associated with your account");
+            return badRequest("Questo obiettivo non è associato al tuo account");
+        }
+
+        const inputStartAt = data.startAt !== undefined ? data.startAt : currentTask.startAt;
+        const inputFinishAt = data.finishAt !== undefined ? data.finishAt : currentTask.finishAt;
+        const isCompleted = data.isCompleted !== undefined ? data.isCompleted : currentTask.isCompleted;
+
+        const startAt =inputStartAt ? new Date(inputStartAt) : undefined;
+        const finishAt = inputFinishAt ? new Date(inputFinishAt) : undefined;
+
+        // Controlli di validità date
+        if (startAt && finishAt && (startAt.getTime() > finishAt.getTime())) {
+            return badRequest("La data di fine non può precedere la data di inizio");
+        }
+        if (!finishAt && isCompleted) {
+            return badRequest("Data di fine mancante per un obiettivo completato");
+        }
+        if (finishAt && !isCompleted) {
+            return badRequest("Impossibile assegnare una data di fine a un obiettivo non completato");
+        }
+        if (finishAt && isCompleted && finishAt.getTime() > Date.now()) {
+            return badRequest("La data di fine non può essere nel futuro");
         }
 
         const taskData = {
@@ -138,34 +161,19 @@ export const updateOneTask = async (data: UpdateTaskRequestBody, taskId: string,
             lastUpdate: new Date(),
         };
 
-        //devo trovare un modo per recuperare i vecchi valori dal database e creare un oggetto, che non salvo subito, con i vecchi valori di base cambiati solo dove sono definiti i nuovi valori
-        //e poi farci sopra tutti i controlli delle date qui sottostanti e infine inserirlo a database.
-
-        if ((taskData.startAt && taskData.finishAt) && (taskData.startAt > taskData.finishAt)) {
-            return badRequest("Finish date precedes start date");
-        }
-        if (!(taskData.finishAt) && taskData.isCompleted) {
-            return badRequest("Required finish date");
-        }
-        if (taskData.finishAt && !taskData.isCompleted) {
-            return badRequest("Invalid isCompleted");
-        }
-        if (taskData.finishAt && taskData.isCompleted && taskData.finishAt.getTime() > Date.now()) {
-            return badRequest("Invalid finish date");
-        }
         const task = await taskRepository.findAndUpdate({ id: taskId, userId }, taskData);
-        return success("Successfully updated task", task[0]);
+        return success("Obiettivo aggiornato con successo", task[0]);
 
     } catch (error) {
-        console.log("Internal server error", error);
-        return internalError("Internal server error");
+        console.log("Errore interno del server", error);
+        return internalError("Errore interno del server");
     }
 }
 
 export const removeOneTask = async (taskId: string, userId: string) => {
     try {
         if (!userId) {
-            return badRequest("UserId is missing");
+            return badRequest("Id utente non trovato");
         }
 
         const validationIdError = validateId(taskId);
@@ -175,22 +183,22 @@ export const removeOneTask = async (taskId: string, userId: string) => {
 
         const currentTask = await taskRepository.findById(taskId);
         if (!currentTask) {
-            return notFound("Task not found");
+            return notFound("Obiettivo non trovato");
         }
 
         if (currentTask.userId != userId) {
-            return badRequest("This task is not associated with your account");
+            return badRequest("Questo obiettivo non è associato al tuo account");
         }
         const task = await taskRepository.deleteById(taskId);
 
         const deleteTask = await taskRepository.findById(taskId);
         if (deleteTask) {
-            return internalError("Task not deleted");
+            return internalError("Obiettivo non eliminato");
         }
-        return success("Successfully removed task");
+        return success("Obiettivo rimosso con successo");
     } catch (error) {
-        console.log("Internal server error", error);
-        return internalError("Internal server error");
+        console.log("Errore interno del server", error);
+        return internalError("Errore interno del server");
     }
 }
 

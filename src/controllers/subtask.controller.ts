@@ -11,8 +11,8 @@ export const getAllSubtasks = async (req: Request, res: Response) => {
         res.status(result.statusCode).json(result);
     }
     catch (error) {
-        console.log("Internal server error ", error);
-        res.status(500).json({ message: "Internal server error" });
+        console.log("Errore interno del server", error);
+        res.status(500).json({ message: "Errore interno del server" });
     }
 }
 
@@ -25,8 +25,8 @@ export const getOneSubtask = async (req: Request, res: Response) => {
         res.status(result.statusCode).json(result);
     }
     catch (error) {
-        console.log("Internal server error ", error);
-        res.status(500).json({ message: "Internal server error" });
+        console.log("Errore interno del server", error);
+        res.status(500).json({ message: "Errore interno del server" });
     }
 }
 
@@ -40,8 +40,8 @@ export const createOneSubtask = async (req: Request, res: Response) => {
         res.status(result.statusCode).json(result);
     }
     catch (error) {
-        console.log("Internal server error ", error);
-        res.status(500).json({ message: "Internal server error" });
+        console.log("Errore interno del server", error);
+        res.status(500).json({ message: "Errore interno del server" });
     }
 }
 
@@ -55,8 +55,8 @@ export const updateOneSubtask = async (req: Request, res: Response) => {
         res.status(result.statusCode).json(result);
     }
     catch (error) {
-        console.log("Internal server error ", error);
-        res.status(500).json({ message: "Internal server error" });
+        console.log("Errore interno del server", error);
+        res.status(500).json({ message: "Errore interno del server" });
     }
 }
 
@@ -69,7 +69,7 @@ export const deleteOneSubtask = async (req: Request, res: Response) => {
         res.status(result.statusCode).json(result);
     }
     catch (error) {
-        console.log("Internal server error ", error);
-        res.status(500).json({ message: "Internal server error" });
+        console.log("Errore interno del server", error);
+        res.status(500).json({ message: "Errore interno del server" });
     }
 }

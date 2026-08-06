@@ -9,7 +9,7 @@ import { SignUpRequestBody, validateSignUpRequestBody } from "../types/user/Sign
 const JWT_SECRET = process.env.JWT_SECRET || ""; //crea una variabile d'ambiente chiamata JWT_SECRET passandogli una chiave segreta usata per firmare i token JWT. Se non esiste nel sistema assegna una stringa vuota.
 
 if (!JWT_SECRET) { //se è vuoto allora l'applicazione si blocca immediatamente lanciando un errore.
-    throw new Error("JWT_SECRET must be defined in environment variables");
+    throw new Error("JWT_SECRET deve essere definito");
 }
 
 const SALT_ROUNDS = 12; //definisce il costo di hashing per la libreria bcrypt, più questo numero è alto, più tempo ci vorrà per crittografare e verificare la password.
@@ -55,26 +55,26 @@ const generateTokenPair = async (userId: string) => {
 export const loginUser = async (email: string, password: string) => {
     try {
         if (!email || !password) {
-            return badRequest("Email and password are required");
+            return badRequest("Email e password sono richieste");
         }
         const user = await userRepository.findUserByEmail(email.trim().toLowerCase());
         if (!user) {
-            return forbidden("Invalid email or password");
+            return forbidden("Email o password non corrette");
         }
         const isPasswordValid = await bcrypt.compare(password, user.hashPassword!);
         if (!isPasswordValid) {
-            return forbidden("Invalid email or password");
+            return forbidden("Email o password non corrette");
         }
         const { accessToken, refreshToken } = await generateTokenPair(user.id);
         const { hashPassword: _, ...userWithoutPassword } = user;
-        return success("Successfully logged in", {
+        return success("Accesso effettuato con successo", {
             accessToken,
             refreshToken,
             user: userWithoutPassword,
         });
     } catch (error) {
-        console.log("Internal server error", error);
-        return internalError("Login failed");
+        console.log("Errore interno del server", error);
+        return internalError("Accesso fallito");
     }
 };
 
@@ -90,17 +90,21 @@ export const signUpUser = async (body: SignUpRequestBody) => {
         //check email 
         const existingUser = await userRepository.findUserByEmail(email.trim().toLowerCase());
         if (existingUser) {
-            return badRequest("Email already exist, plese choose another one");
+            return badRequest("Questa e-mail esiste già, sceglierne un'altra");
         }
-
-        const todayYear = new Date().getFullYear();
-        const birthdayYear = new Date().getFullYear();
 
         //check date
         if (birthday) {
-            if ((todayYear - birthdayYear <= 12) || (todayYear + birthdayYear >= 128)) {
-                return badRequest("You must be between 12 and 128 years old");
+            const todayYear = new Date().getFullYear();
+            const birthdayYear = new Date(birthday).getFullYear();
+            const age = todayYear - birthdayYear;
+            if ((age < 12) || (age >= 128)) {
+                return badRequest("Devi avere almeno 12 anni e al massimo 128");
             }
+        }
+
+        if (phoneNumber && (phoneNumber.trim().length != 13)) {
+            return badRequest("Numero di telefono non corretto");
         }
 
         //hash password
@@ -117,54 +121,54 @@ export const signUpUser = async (body: SignUpRequestBody) => {
 
         const createdUser = await userRepository.create(userData);
         const { refreshToken, accessToken } = await generateTokenPair(createdUser.id);
-        return created("Succesfully signed up", {
+        return created("Accesso effettuato con successo", {
             user: createdUser,
             refreshToken,
             accessToken
         });
     } catch (error) {
-        console.log("Internal server error", error);
-        return internalError("Sign up failed");
+        console.log("Errore interno del server", error);
+        return internalError("Accesso fallito");
     }
 }
 
 export const refreshAccessToken = async (refreshToken: string) => {
     try {
         if (!refreshToken) {
-            return badRequest("Missing refresh Token");
+            return badRequest("Refresh Token mancante");
         }
         const refreshTokenHash = crypto.createHash("sha256").update(refreshToken).digest("hex");
         const stroredRefreshToken = await refreshTokenRepository.findValidToken(refreshTokenHash);
         if (!stroredRefreshToken) {
-            return unauthorized("invalid or expired token");
+            return unauthorized("Token invalido o scaduto");
         }
         const user = await userRepository.findById(stroredRefreshToken.userId);
         if (!user) {
-            return unauthorized("user not found");
+            return unauthorized("Utente non trovato");
         }
         const newAccessToken = generateAccessToken(user.id);
-        return success("Access token succesfully created", { newAccessToken });
+        return success("Access token creato con successo", { newAccessToken });
     }
     catch (error) {
-        console.log("Internal server error", error);
-        return internalError("Internal server error");
+        console.log("Errore interno del server", error);
+        return internalError("Errore interno del server");
     }
 };
 
 export const logOutUser = async (refreshToken: string) => {
     try {
         if (!refreshToken) {
-            return badRequest("missing refresh token");
+            return badRequest("Refresh Token mancante");
         }
         const refreshTokenHash = crypto.createHash("sha256").update(refreshToken).digest("hex");
         const revokedRefreshToken = await refreshTokenRepository.revokeToken(refreshTokenHash);
         if (!revokedRefreshToken) {
-            return badRequest("invalid or already revoked refresh token");
+            return badRequest("Refresh token invalido o scaduto");
         }
-        return success("Succesfully logged out");
+        return success("Log-out effettuato");
     }
     catch (error) {
-        console.log("Internal server error", error);
-        return internalError("Internal server error");
+        console.log("Errore interno del server", error);
+        return internalError("Errore interno del server");
     }
 }

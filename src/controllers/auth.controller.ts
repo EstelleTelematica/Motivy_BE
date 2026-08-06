@@ -10,8 +10,8 @@ export const login = async (req: Request, res: Response) => {
         const result = await loginUser(email, password); //
         res.status(result.statusCode).json(result); //assegna alla risposta uno statuts dato dal valore di ritorno della funzione statusCode e un messaggio contenente sia l'email ch la password
     } catch (error) {
-        console.log("Unexpected error in controller"); //segnala un erorore sul terminale
-        res.status(500).json({ message: "Internal server error" }); //assegna alla risposta uno status 500 e un messaggio di errore interno al server
+        console.log("Errore inaspettato nel controller"); //segnala un erorore sul terminale
+        res.status(500).json({ message: "Errore interno del server" }); //assegna alla risposta uno status 500 e un messaggio di errore interno al server
     }
 };
 
@@ -21,8 +21,8 @@ export const logout = async (req: Request, res: Response) => {
         const result = await logOutUser(refreshToken);
         res.status(result.statusCode).json(result);
     } catch (error) {
-        console.log("Unexpected error in controller");
-        res.status(500).json({ message: "Internal server error" });
+        console.log("Errore inaspettato nel controller");
+        res.status(500).json({ message: "Errore interno del server" });
     }
 };
 
@@ -32,8 +32,8 @@ export const signUp = async (req: Request, res: Response) => {
         const result = await signUpUser(data);
         res.status(result.statusCode).json(result);
     } catch (error) {
-        console.log("Unexpected error in controller");
-        res.status(500).json({ message: "Internal server error" });
+        console.log("Errore inaspettato nel controller");
+        res.status(500).json({ message: "Errore interno del server" });
     }
 };
 
@@ -45,8 +45,8 @@ export const refreshToken = async (req: Request, res: Response) => {
         res.status(result.statusCode).json(result);
     }
     catch (error) {
-        console.log("Unexpected error in controller");
-        res.status(500).json({ message: "Internal server error" });
+        console.log("Errore inaspettato del controller");
+        res.status(500).json({ message: "Errore interno del server" });
     }
 };
 
@@ -60,10 +60,10 @@ export const getMe = async (req: Request, res: Response) => {
             data: user,
         });
     } catch (error) {
-        console.log("Unexpected error in getMe controller");
+        console.log("Errore inaspettato del controller");
         return res.status(500).json({
             success: false,
-            message: "Internal server error"
+            message: "Errore interno del server"
         });
     }
 };

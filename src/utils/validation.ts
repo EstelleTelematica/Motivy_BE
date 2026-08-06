@@ -9,5 +9,5 @@ export const validateId = (id: string) => {
     if (!error) return null;
 
     // Se c'è un errore di validazione
-    return "Invalid Task ID format. Must be a valid UUIDv4";
+    return "Formato non valido dell'ID dell'obbietto. Deve essere un UUIDv4 valido";
 };

@@ -6,7 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "";
 export const decode = async (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization; //il nostro token che passiamo da postman
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return res.status(401).json({ error: "No Access Token Provided" });
+        return res.status(401).json({ error: "Nessun Access Token fornito" });
     }
     const token = authHeader.replace("Bearer ", "");
     try {
@@ -15,6 +15,6 @@ export const decode = async (req: Request, res: Response, next: NextFunction) =>
         (req as any).userId = decoded.userId; //typescript linguagggio che aggiunge un parametro userId alla richiesta per questa specifica istanza
         next(); //funzione middleware che dice passa al prossimo middleware
     } catch (error: any) {
-        return res.status(401).json({ error: "Invalid or expired token" });
+        return res.status(401).json({ error: "Token invalido o scaduto" });
     }
 };

@@ -4,21 +4,21 @@ import { taskRepository } from "../db/repositories/task.repository";
 import { userRepository } from "../db/repositories/user.repository";
 import { CreateSubtaskRequestBody, validateCreateSubtaskRequestBody } from "../types/subtask/CreateSubtaskRequestBody";
 import { UpdateSubtaskRequestBody, validateUpdateSubtaskRequestBody } from "../types/subtask/UpdateSubtaskRequestBody";
-import { badRequest, internalError, notFound, success } from "../utils/responses";
+import { badRequest, internalError, notFound, success, created } from "../utils/responses";
 import { validateId } from "../utils/validation";
 
 export const retrieveAllSubtasks = async (userId: string, taskId: string) => {
     try {
         if (!userId) {
-            return badRequest("UserId is missing");
+            return badRequest("Id utente non trovato");
         }
         const user = await userRepository.findById(userId);
         if (!user) {
-            return notFound("User not found");
+            return notFound("Utente non trovato");
         }
 
         if (!taskId) {
-            return badRequest("TaskId is missing");
+            return badRequest("Id obiettivo non trovato");
         }
         const validationTaskIdError = validateId(taskId);
         if (validationTaskIdError) {
@@ -26,29 +26,29 @@ export const retrieveAllSubtasks = async (userId: string, taskId: string) => {
         }
         const task = await taskRepository.findById(taskId);
         if (!task) {
-            return notFound("Task not found");
+            return notFound("Obiettivo non trovato");
         }
         if (task.userId !== userId) {
-            return badRequest("This task is not associated with your account");
+            return badRequest("Questo obiettivo non è associato al tuo account");
         }
         const subtasks = await subtaskRepository.findSubtasksByTask(task.id);
-        return success(`Succesfully retrieved ${subtasks.length} subtasks`, { subtasks });
+        return success(`Recuperati con successo ${subtasks.length} sottobiettivi`, { subtasks });
     } catch (error) {
-        console.log("Internal server error", error);
-        return internalError("Internal server error");
+        console.log("Errore interno del server", error);
+        return internalError("Errore interno del server");
     }
 }
 
 export const retrieveOneSubtask = async (userId: string, taskId: string, subtaskId: string) => {
     try {
         if (!userId) {
-            return badRequest("UserId is missing");
+            return badRequest("Id utente non trovato");
         }
         if (!taskId) {
-            return badRequest("TaskId is missing");
+            return badRequest("Id obiettivo non trovato");
         }
         if (!subtaskId) {
-            return badRequest("SubtaskId is missing");
+            return badRequest("Id sottobiettivo non trovato");
         }
         const validationTaskIdError = validateId(taskId);
         if (validationTaskIdError) {
@@ -60,28 +60,28 @@ export const retrieveOneSubtask = async (userId: string, taskId: string, subtask
         }
         const user = await userRepository.findById(userId);
         if (!user) {
-            return notFound("User not found");
+            return notFound("Utente non trovato");
         }
         const task = await taskRepository.findById(taskId);
         if (!task) {
-            return notFound("Task not found");
+            return notFound("Obiettivo non trovato");
         }
         //controllo che task id sia l'id in ingresso
         if (task.userId !== userId) {
-            return badRequest("This task is not associated with your account");
+            return badRequest("Questo obiettivo non è associato al tuo account");
         }
         const subtask = await subtaskRepository.findById(subtaskId);
         if (!subtask) {
-            return notFound("Subtask not found");
+            return notFound("Sottobiettivo non trovato");
         }
         //controllo che il taskId del subtask sia il taskId in ingresso
         if (subtask.taskId !== taskId) {
-            return badRequest("This subtask is not associated with your task");
+            return badRequest("Questo sottobiettivo non è associato a questo obiettivo");
         }
-        return success("Succesfully retrieved subtask", subtask);
+        return success("Sottobiettivo recuperato con successo", subtask);
     } catch (error) {
-        console.log("Internal server error", error);
-        return internalError("Internal server error");
+        console.log("Errore interno del server", error);
+        return internalError("Errore interno del server");
     }
 }
 
@@ -91,15 +91,15 @@ export const generateOneSubtask = async (data: CreateSubtaskRequestBody, userId:
         await client.query("BEGIN");
         if (!userId) {
             await client.query("ROLLBACK");
-            return badRequest("UserId is missing");
+            return badRequest("Id utente non trovato");
         }
         if (!taskId) {
             await client.query("ROLLBACK");
-            return badRequest("TaskId is missing");
+            return badRequest("Id obiettivo non trovato");
         }
         if (!data) {
             await client.query("ROLLBACK");
-            return badRequest("Subtask data are missing");
+            return badRequest("Dati del sottobiettivo non trovati");
         }
         const validationTaskIdError = validateId(taskId);
         if (validationTaskIdError) {
@@ -109,17 +109,17 @@ export const generateOneSubtask = async (data: CreateSubtaskRequestBody, userId:
         const user = await userRepository.findById(userId);
         if (!user) {
             await client.query("ROLLBACK");
-            return notFound("User not found");
+            return notFound("Utente non trovato");
         }
         const task = await taskRepository.findById(taskId);
         if (!task) {
             await client.query("ROLLBACK");
-            return notFound("Task not found");
+            return notFound("Obiettivo non trovato");
         }
         //controllo che tahsk id sia l'id in ingresso
         if (task.userId !== userId) {
             await client.query("ROLLBACK");
-            return badRequest("This task is not associated with your account");
+            return badRequest("Questo obiettivo non è associato al tuo account");
         }
         const validationSubtaskError = validateCreateSubtaskRequestBody(data);
         if (validationSubtaskError) {
@@ -127,38 +127,50 @@ export const generateOneSubtask = async (data: CreateSubtaskRequestBody, userId:
             return badRequest(validationSubtaskError);
         }
 
-        //controlli sui valori da inserire nel subtask
-        const { name, description, colour, isCompleted, startAt, finishAt } = data;
-        const startDate = startAt ? new Date(startAt) : null;
-        const finishDate = finishAt ? new Date(finishAt) : null;
-        /*let startDate;
-        if (startAt) { 
-            // SE startAt esiste ed è valido (non è null, undefined o una stringa vuota)
-            // Lo tasformo in un oggetto Date
-            startDate = new Date(startAt);  
-        } else { 
-            // ALTRIMENTI (se l'utente non ha inserito la data di inizio)
-            // Lo traformo in una variabile a null
-            startDate = null;
-        }
-        */
+        const { name, description, colour, isCompleted } = data;
+
+        const startAtValue = data.startAt;
+        const finishAtValue = data.finishAt;
+
+        const startDate = startAtValue ? new Date(startAtValue) : undefined;
+        const finishDate = finishAtValue ? new Date(finishAtValue) : undefined;
+
         const now = Date.now();
-        if ((startDate && finishAt) && (startDate > finishAt)) {
+
+        if (startDate && finishDate && startDate.getTime() > finishDate.getTime()) {
             await client.query("ROLLBACK");
-            return badRequest("Finish date precedes start date");
+            return badRequest("La data di fine precede la data d'inizio");
         }
         if (!finishDate && isCompleted === true) {
             await client.query("ROLLBACK");
-            return badRequest("Required finish date");
+            return badRequest("Data di fine mancante per un sottobiettivo completato");
         }
         if (finishDate && isCompleted === false) {
             await client.query("ROLLBACK");
-            return badRequest("Invalid isCompleted");
+            return badRequest("Impossibile assegnare una data di fine a un sottobiettivo non completato");
         }
         if (finishDate && isCompleted === true && finishDate.getTime() > now) {
             await client.query("ROLLBACK");
-            return badRequest("Invalid finish date");
+            return badRequest("La data di fine non può essere nel futuro");
         }
+
+        if (task.startAt && startDate) {
+            if (startDate.getTime() < new Date(task.startAt).getTime()) {
+                await client.query("ROLLBACK");
+                return badRequest("La data di inizio del sottobiettivo non può precedere la data di inizio dell'obiettivo");
+            }
+        }
+        if (task.finishAt && finishDate) {
+            if (finishDate.getTime() > new Date(task.finishAt).getTime()) {
+                await client.query("ROLLBACK");
+                return badRequest("La data di fine del sottobiettivo non può seguire la data di fine dell'obiettivo");
+            }
+        }
+        if (task.isCompleted && !isCompleted) {
+            await client.query("ROLLBACK");
+            return badRequest("Non è possibile avere un sottobiettivo incompleto se l'obiettivo risulta completato");
+        }
+
         //creazione subtask
         const subtaskData = {
             taskId: taskId,
@@ -166,20 +178,21 @@ export const generateOneSubtask = async (data: CreateSubtaskRequestBody, userId:
             description: description,
             colour: colour,
             isCompleted: isCompleted,
-            startAt: startAt,
-            finishAt: finishAt
+            startAt: startDate,
+            finishAt: finishDate
         }
+
         const subtask = await subtaskRepository.createWithClient(client, subtaskData);
         //se hasSubtask è falso allora lo setto a true
         if (!task.hasSubtask) {
             await taskRepository.findAndUpdateWithClient(client, { id: taskId, userId }, { hasSubtask: true });
         }
         await client.query("COMMIT");
-        return success(`Succesfully created`, subtask);
+        return created(`Sottobiettivo creato con successo`, subtask);
     } catch (error) {
         await client.query("ROLLBACK");
-        console.log("Internal server error", error);
-        return internalError("Internal server error");
+        console.log("Errore interno del server", error);
+        return internalError("Errore interno del server");
     } finally {
         client.release();
     }
@@ -188,13 +201,13 @@ export const generateOneSubtask = async (data: CreateSubtaskRequestBody, userId:
 export const editOneSubtask = async (data: UpdateSubtaskRequestBody, userId: string, taskId: string, subtaskId: string) => {
     try {
         if (!userId) {
-            return badRequest("UserId is missing");
+            return badRequest("Id utente non trovato");
         }
         if (!taskId) {
-            return badRequest("TaskId is missing");
+            return badRequest("Id obiettivo non trovato");
         }
         if (!data) {
-            return badRequest("Subtask data are missing");
+            return badRequest("Dati del sottobiettivo non trovati");
         }
         const validationTaskIdError = validateId(taskId);
         if (validationTaskIdError) {
@@ -210,60 +223,79 @@ export const editOneSubtask = async (data: UpdateSubtaskRequestBody, userId: str
         }
         const user = await userRepository.findById(userId);
         if (!user) {
-            return notFound("User not found");
+            return notFound("Utente non trovato");
         }
         const task = await taskRepository.findById(taskId);
         if (!task) {
-            return notFound("Task not found");
+            return notFound("Obiettivo non trovato");
         }
         //controllo che task id sia l'id in ingresso
         if (task.userId !== userId) {
-            return badRequest("This task is not associated with your account");
+            return badRequest("Questo obiettivo non è associato al tuo account");
         }
         const currentSubtask = await subtaskRepository.findById(subtaskId);
         if (!currentSubtask) {
-            return notFound("Subtask not found");
+            return notFound("Sottobiettivo non trovato");
         }
         //controllo che il taskid del subtask sia l'id del task
         if (currentSubtask.taskId !== taskId) {
-            return badRequest("This subtask is not associated with your task");
+            return badRequest("Questo sottobiettivo non è associato a questo obiettivo");
         }
 
-        //creazione subtask
+        const startAtValue = data.startAt !== undefined ? data.startAt : currentSubtask.startAt;
+        const finishAtValue = data.finishAt !== undefined ? data.finishAt : currentSubtask.finishAt;
+        const isCompleted = data.isCompleted !== undefined ? data.isCompleted : currentSubtask.isCompleted;
+
+        const startDate = startAtValue ? new Date(startAtValue) : undefined;
+        const finishDate = finishAtValue ? new Date(finishAtValue) : undefined;
+
+        const now = Date.now();
+
+        if (startDate && finishDate && startDate.getTime() > finishDate.getTime()) {
+            return badRequest("La data di fine non può precedere la data di inizio");
+        }
+        if (!finishDate && isCompleted === true) {
+            return badRequest("Data di fine mancante per un sottobiettivo completato");
+        }
+        if (finishDate && isCompleted === false) {
+            return badRequest("Impossibile assegnare una data di fine a un sottobiettivo non completato");
+        }
+        if (finishDate && isCompleted === true && finishDate.getTime() > now) {
+            return badRequest("La data di fine non può essere nel futuro");
+        }
+
+        if (task.startAt && startDate) {
+            if (startDate.getTime() < new Date(task.startAt).getTime()) {
+                return badRequest("Il sottobiettivo non può avere una data di inizio che precede la data di inizio dell'obiettivo");
+            }
+        }
+        if (task.finishAt && finishDate) {
+            if (finishDate.getTime() > new Date(task.finishAt).getTime()) {
+                return badRequest("La data di fine del sottobiettivo non può seguire la data di fine dell'obiettivo");
+            }
+        }
+        if (task.isCompleted && !isCompleted) {
+            return badRequest("Non è possibile avere un sottobiettivo incompleto se l'obiettivo è completato");
+        }
+
+        //preparazione dati da salvare
         const subtaskData = {
             name: data.name ?? currentSubtask.name,
             description: data.description ?? currentSubtask.description,
             colour: data.colour ?? currentSubtask.colour,
-            isCompleted: data.isCompleted ?? currentSubtask.isCompleted,
-            startAt: data.startAt ?? currentSubtask.startAt,
-            finishAt: data.finishAt ?? currentSubtask.finishAt,
+            isCompleted: isCompleted,
+            startAt: startDate,
+            finishAt: finishDate,
             lastUpdate: new Date(),
         };
 
-        //controlli sui valori da inserire nel subtask
-        const startDate = data.startAt ? new Date(data.startAt) : null;
-        const finishDate = data.finishAt ? new Date(data.finishAt) : null;
-        const now = Date.now();
-        if ((startDate && finishDate) && (startDate > finishDate)) {
-            return badRequest("Finish date precedes start date");
-        }
-        if (!finishDate && data.isCompleted === true) {
-            return badRequest("Required finish date");
-        }
-        if (finishDate && data.isCompleted === false) {
-            return badRequest("Invalid isCompleted");
-        }
-        if (finishDate && data.isCompleted === true && finishDate.getTime() > now) {
-            return badRequest("Invalid finish date");
-        }
-
         //salvo subtask nel data base
         const subtask = await subtaskRepository.findAndUpdate({ id: subtaskId, taskId }, subtaskData);
-        return success("Successfully updated subtask", subtask[0]);
+        return success("Sottobiettivo aggiornato con successo", subtask[0]);
 
     } catch (error) {
-        console.log("Internal server error", error);
-        return internalError("Internal server error");
+        console.log("Errore interno del server", error);
+        return internalError("Errore interno del server");
     }
 }
 
@@ -272,11 +304,11 @@ export const removeOneSubtask = async (userId: string, taskId: string, subtaskId
     try {
         if (!userId) {
             await client.query("ROLLBACK");
-            return badRequest("UserId is missing");
+            return badRequest("Id utente non trovato");
         }
         if (!taskId) {
             await client.query("ROLLBACK");
-            return badRequest("TaskId is missing");
+            return badRequest("Id obiettivo non trovato");
         }
         const validationTaskIdError = validateId(taskId);
         if (validationTaskIdError) {
@@ -291,27 +323,27 @@ export const removeOneSubtask = async (userId: string, taskId: string, subtaskId
         const user = await userRepository.findById(userId);
         if (!user) {
             await client.query("ROLLBACK");
-            return notFound("User not found");
+            return notFound("Utente non trovato");
         }
         const task = await taskRepository.findById(taskId);
         if (!task) {
             await client.query("ROLLBACK");
-            return notFound("Task not found");
+            return notFound("Obiettivo non trovato");
         }
         //controllo che task id sia l'id in ingresso
         if (task.userId !== userId) {
             await client.query("ROLLBACK");
-            return badRequest("This task is not associated with your account");
+            return badRequest("Questo obiettivo non è associato al tuo account");
         }
         const currentSubtask = await subtaskRepository.findById(subtaskId);
         if (!currentSubtask) {
             await client.query("ROLLBACK");
-            return notFound("Subtask not found");
+            return notFound("Sottobiettivo non trovato");
         }
         //controllo che il taskid del subtask sia l'id del task
         if (currentSubtask.taskId !== taskId) {
             await client.query("ROLLBACK");
-            return badRequest("This subtask is not associated with your task");
+            return badRequest("Questo sottobiettivo non è associato a questo obiettivo");
         }
         await subtaskRepository.deleteByIdWithClient(client, subtaskId);
         const n = await subtaskRepository.countSubtasksByTaskWithClient(client, taskId);
@@ -319,11 +351,11 @@ export const removeOneSubtask = async (userId: string, taskId: string, subtaskId
             await taskRepository.findAndUpdateWithClient(client, { id: taskId, userId }, { hasSubtask: false });
         }
         await client.query("COMMIT");
-        return success("Successfully removed subtask");
+        return success("Sottobiettivo rimosso con successo");
     } catch (error) {
         await client.query("ROLLBACK");
-        console.log("Internal server error", error);
-        return internalError("Internal server error");
+        console.log("Errore interno del server", error);
+        return internalError("Errore interno del server");
     } finally {
         client.release();
     }
@@ -366,7 +398,3 @@ const human: Human = {
     age: 20
 };
 */
-
-
-
-

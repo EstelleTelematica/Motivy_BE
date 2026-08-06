@@ -11,7 +11,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: ["http://localhost:3000"],
+    origin: ["http://localhost:5173"],
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
@@ -23,7 +23,7 @@ app.options("*", cors());
 const notFoundHandler: RequestHandler = (req, res) => {
   res.status(404).json({
     success: false,
-    message: "API endpoint doesnt exist",
+    message: "Non esiste l'enpoint API",
   });
 };
 
@@ -31,19 +31,19 @@ app.use(express.json()); //express interpreta i dati della route in json
 
 app.use("/auth", authRouter);
 app.use("/tasks", decode, taskRouter);
-app.use("*", notFoundHandler); //richiamo tutte le route per controllare se si aproo correttamente o restituisco errore
+app.use("*", notFoundHandler); //richiamo tutte le route per controllare se si aprono correttamente o restituisco un errore
 
 const PORT = process.env.PORT || 8080;
 
 (async () => {
   try {
     const res = await pool.query("SELECT NOW()");
-    console.log("Successfully connected to PostgreSQL at:", res.rows[0].now);
+    console.log("Connesso correttamente a PostgreSQL alla riga:", res.rows[0].now);
     app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+      console.log(`Server funziona alla porta: ${PORT}`);
     });
   } catch (err) {
-    console.error("Failed to connect to PostgreSQL:", err);
+    console.error("Fallito nel connettersi a PostgreSQL:", err);
     process.exit(1);
   }
 })();

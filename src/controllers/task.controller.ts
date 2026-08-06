@@ -9,8 +9,8 @@ export const getAllTasks = async (req: Request, res: Response) => {
         const result = await retrieveAllTasks(userId);
         res.status(result.statusCode).json(result);
     } catch (error) {
-        console.log("Internal server error ", error);
-        res.status(500).json({ message: "Internal server error" });
+        console.log("Errore interno del server", error);
+        res.status(500).json({ message: "Errore interno del server" });
     }
 }
 
@@ -38,8 +38,8 @@ export const createOneTask = async (req: Request, res: Response) => {
         const result = await generateOneTask(data, userId);
         res.status(result.statusCode).json(result);
     } catch (error) {
-        console.log("Internal server error ", error);
-        res.status(500).json({ message: "Internal server error" });
+        console.log("Errore interno del server", error);
+        res.status(500).json({ message: "Errore interno del server" });
     }
 }
 
@@ -51,8 +51,8 @@ export const getOneTask = async (req: Request, res: Response) => {
         const result = await retrieveOneTask(id, userId);
         res.status(result.statusCode).json(result);
     } catch (error) {
-        console.log("Internal server error ", error);
-        res.status(500).json({ message: "Internal server error" });
+        console.log("Errore interno del server", error);
+        res.status(500).json({ message: "Errore interno del server" });
     }
 }
 
@@ -65,8 +65,8 @@ export const editOneTask = async (req: Request, res: Response) => {
         const result = await updateOneTask(data, id, userId);
         res.status(result.statusCode).json(result);
     } catch (error) {
-        console.log("Internal server error", error);
-        res.status(500).json({ message: "Internal server error" });
+        console.log("Errore interno del server", error);
+        res.status(500).json({ message: "Errore interno del server" });
     }
 }
 
@@ -78,8 +78,8 @@ export const deleteOneTask = async (req: Request, res: Response) => {
         const result = await removeOneTask(id, userId);
         res.status(result.statusCode).json(result);
     } catch (error) {
-        console.log("Internal server error", error);
-        res.status(500).json({ message: "Internal server error" });
+        console.log("Errore interno del server", error);
+        res.status(500).json({ message: "Errore interno del server" });
     }
 }
 
